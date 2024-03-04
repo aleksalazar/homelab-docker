@@ -1,9 +1,23 @@
 version: "3.2"
 services:
+  # Indexer
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago
+    volumes:
+      - /docker/appdata/prowlarr/config:/config
+    ports:
+      - 9696:9696
+    restart: always
+  # Movies
   radarr:
     container_name: radarr
     image: ghcr.io/hotio/radarr:latest
-    restart: unless-stopped
+    restart: always
     logging:
       driver: json-file
     ports:
@@ -15,11 +29,12 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /docker/appdata/radarr:/config
-      - /data:/data
+      - /mnt/nas/media/data:/data
+  # TV Shows
   sonarr:
     container_name: sonarr
     image: ghcr.io/hotio/sonarr:latest
-    restart: unless-stopped
+    restart: always
     logging:
       driver: json-file
     ports:
@@ -31,11 +46,12 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /docker/appdata/sonarr:/config
-      - /data:/data
+      - /mnt/nas/media/data:/data
+  # Subtitles
   bazarr:
     container_name: bazarr
     image: ghcr.io/hotio/bazarr:latest
-    restart: unless-stopped
+    restart: always
     logging:
       driver: json-file
     ports:
@@ -47,11 +63,12 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /docker/appdata/bazarr:/config
-      - /data/media:/data/media
+      - /mnt/nas/media/data/media:/data/media
+  # News
   sabnzbd:
     container_name: sabnzbd
     image: ghcr.io/hotio/sabnzbd:latest
-    restart: unless-stopped
+    restart: always
     logging:
       driver: json-file
     ports:
@@ -64,4 +81,34 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /docker/appdata/sabnzbd:/config
-      - /data/usenet:/data/usenet:rw
+      - /mnt/nas/media/data/usenet:/data/usenet:rw
+  # Command and control
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    environment:
+      - LOG_LEVEL=debug
+      - TZ=America/Chicago
+    ports:
+      - 5055:5055
+    volumes:
+      - /root/jellyseerr/config:/app/config
+    restart: always
+  # Torrent client
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago
+      - WEBUI_PORT=8080
+      - TORRENTING_PORT=6881
+    volumes:
+      - /root/qbittorrent/config:/config
+      - /mnt/nas/media/downloads:/downloads
+    ports:
+      - 8080:8080
+      - 6881:6881
+      - 6881:6881/udp
+    restart: always
