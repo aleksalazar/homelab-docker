@@ -1,128 +1,151 @@
-version: "3.2"
+version: "3"
+
 services:
-  # Indexer
-  prowlarr:
-    image: lscr.io/linuxserver/prowlarr:latest
-    container_name: prowlarr
+  # VPN
+  gluetun:
+    image: qmcgaw/gluetun
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    ports:
+      - 6881:6881
+      - 6881:6881/udp
+      - 8085:8085 # qbittorrent
+      - 8989:8989 # Sonarr
+      - 7878:7878 # Radarr
+      - 9696:9696 # Prowlarr
+      - 8787:8787 # Readarr
+      - 8686:8686 # Lidarr
+    volumes:
+      - /docker/gluetun:/gluetun
     environment:
       - PUID=0
       - PGID=0
+      # See https://github.com/qdm12/gluetun-wiki/tree/main/setup#setup
+      - VPN_SERVICE_PROVIDER=private internet access
+      # - VPN_TYPE=wireguard #default is openvpn
+      # OpenVPN:
+      - OPENVPN_ROOT=yes
+      - OPENVPN_USER=
+      - OPENVPN_PASSWORD=
+      # Wireguard:
+      # - WIREGUARD_PRIVATE_KEY=<YOUR_PRIVATE_KEY> # See https://github.com/qdm12/gluetun-wiki/blob/main/setup/providers/nordvpn.md#obtain-your-wireguard-private-key
+      # - WIREGUARD_ADDRESSES=10.5.0.2/32
+      # Timezone for accurate log times
       - TZ=America/Chicago
-    volumes:
-      - /docker/appdata/prowlarr/config:/config
-    ports:
-      - 9696:9696
-    restart: always
-  # Books
-  readarr:
-    image: lscr.io/linuxserver/readarr:develop
-    container_name: readarr
-    environment:
-      - PUID=0
-      - PGID=0
-      - TZ=America/Chicago
-    volumes:
-      - /docker/appdata/readarr/:/config
-      - /mnt/nas/media/data/media/books:/books #optional
-    ports:
-      - 8787:8787
-    restart: always
-  # Movies
-  radarr:
-    container_name: radarr
-    image: ghcr.io/hotio/radarr:latest
-    restart: always
-    logging:
-      driver: json-file
-    ports:
-      - 7878:7878
-    environment:
-      - PUID=0
-      - PGID=0
-      - TZ=America/Chicago
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /docker/appdata/radarr:/config
-      - /mnt/nas/media/data/media:/data
-  # TV Shows
-  sonarr:
-    container_name: sonarr
-    image: ghcr.io/hotio/sonarr:latest
-    restart: always
-    logging:
-      driver: json-file
-    ports:
-      - 8989:8989
-    environment:
-      - PUID=0
-      - PGID=0
-      - TZ=America/Chicago
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /docker/appdata/sonarr:/config
-      - /mnt/nas/media/data/media:/data
-  # Subtitles
-  bazarr:
-    container_name: bazarr
-    image: ghcr.io/hotio/bazarr:latest
-    restart: always
-    logging:
-      driver: json-file
-    ports:
-      - 6767:6767
-    environment:
-      - PUID=0
-      - PGID=0
-      - TZ=America/Chicago
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /docker/appdata/bazarr:/config
-      - /mnt/nas/media/data/media:/data/media
-  # News
-  sabnzbd:
-    container_name: sabnzbd
-    image: ghcr.io/hotio/sabnzbd:latest
-    restart: always
-    logging:
-      driver: json-file
-    ports:
-      - 8081:8081
-      - 9090:9090
-    environment:
-      - PUID=0
-      - PGID=0
-      - TZ=America/Chicago
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /docker/appdata/sabnzbd:/config
-      - /mnt/nas/media/data/usenet/usenet:/data/usenet:rw
-  # Command and control
-  jellyseerr:
-    image: fallenbagel/jellyseerr:latest
-    container_name: jellyseerr
-    environment:
-      - LOG_LEVEL=debug
-      - TZ=America/Chicago
-    ports:
-      - 5055:5055
-    volumes:
-      - /docker/appdata/jellyseerr/config:/app/config
+      - SERVER_REGIONS=US Texas,US Houston
+      - UPDATER_PERIOD=24h
     restart: always
   # Torrent client
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
     container_name: qbittorrent
+    network_mode: "service:gluetun"
     environment:
       - PUID=0
       - PGID=0
       - TZ=America/Chicago
-      - WEBUI_PORT=8080
+      - WEBUI_PORT=8085
       - TORRENTING_PORT=6881
     volumes:
-      - /docker/appdata/qbittorrent/config:/config
-      - /mnt/nas/media/data/torrents:/downloads
-    ports:
-      - 8080:8080
-      - 6881:6881
-      - 6881:6881/udp
+      - /docker/qbittorrent:/config
+      - /mnt/nas/media/downloads:/downloads
+    # ports:
+    #   - 8085:8085
+    #   - 6881:6881
+    #   - 6881:6881/udp
     restart: always
+  # Command and control
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    environment:
+      - PUID=0
+      - PGID=0
+      - LOG_LEVEL=debug
+      - TZ=America/Chicago
+    ports:
+      - 5055:5055
+    volumes:
+      - /docker/jellyseerr:/app/config
+    restart: always
+  # Indexer
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    network_mode: "service:gluetun"
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=America/Chicago
+    volumes:
+      - /docker/prowlarr:/config
+    # ports:
+    #   - 9696:9696
+    restart: always
+  # Books
+  readarr:
+    image: lscr.io/linuxserver/readarr:develop
+    container_name: readarr
+    network_mode: "service:gluetun"
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=America/Chicago
+    volumes:
+      - /docker/readarr:/config
+      - /mnt/nas/media/books:/books #optional
+      - /mnt/nas/media/downloads:/downloads #optional
+    # ports:
+    #   - 8787:8787
+    restart: always
+  # TV
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    network_mode: "service:gluetun"
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=America/Chicago
+    volumes:
+      - /docker/sonarr:/config
+      - /mnt/nas/media/tv:/tv #optional
+      - /mnt/nas/media/downloads:/downloads #optional
+    # ports:
+    #   - 8989:8989
+    restart: always
+  # Movies
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    network_mode: "service:gluetun"
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=America/Chicago
+    volumes:
+      - /docker/radarr:/config
+      - /mnt/nas/media/movies:/movies #optional
+      - /mnt/nas/media/downloads:/downloads #optional
+    # ports:
+    #   - 7878:7878
+    restart: always
+  # Music
+  lidarr:
+    image: lscr.io/linuxserver/lidarr:latest
+    container_name: lidarr
+    network_mode: "service:gluetun"
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=America/Chicago
+    volumes:
+      - /docker/lidarr:/config
+      - /mnt/nas/media/music:/music #optional
+      - /mnt/nas/media/downloads:/downloads #optional
+    # ports:
+    #   - 8686:8686
+    restart: unless-stopped
