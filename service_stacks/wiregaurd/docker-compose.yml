@@ -1,0 +1,47 @@
+version: "2.1"
+
+services:
+  wireguard:
+    image: linuxserver/wireguard:latest
+    container_name: wireguard
+
+    restart: unless-stopped
+    sysctls:
+      - net.ipv4.ip_forward=1
+      - net.ipv4.conf.all.src_valid_mark=1
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+
+    # Network only needed if you want to use pihole while connected to the WireGuard VPN.
+    networks:
+      wireguard-pihole:
+        ipv4_address: 192.168.86.32
+    ports:
+      - 51820:51820/udp
+
+    volumes:
+      - /docker/wiregaurd/config:/config
+      - /lib/modules:/lib/modules #optional
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=America/Chicago
+      - SERVERURL=wiregaurd.domain.com #optional
+      - SERVERPORT=51820
+      - PEERS=devA,devB
+      - PEERDNS=192.168.86.31
+      # - INTERNAL_SUBNET=10.13.13.0
+      # ALLOWEDIPS= SUBNET -------, ROUTER ------, PVE ----------, SERVICES -----, NAS ----------, PORTAINER ----, GAMES ---------, ACQUISARR------, MEDIA CLIENT --, PI WG-PI ------,  SUBNET WG-PI -, WG WG-PI -------,
+      - ALLOWEDIPS=192.168.68.0/22,192.168.68.1/22,192.168.68.2/22,192.168.68.3/22,192.168.68.4/22,192.168.68.5/22,192.168.68.10/22,192.168.68.20/22,192.168.68.21/22,192.168.86.31/24, 192.168.86.0/24, 192.168.86.32/24
+      - LOG_CONFS=true
+
+# Network only needed if you want to use pihole while connected to the WireGuard VPN.
+networks:
+  wireguard-pihole:
+    name: "wireguard-pihole"
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.86.0/24

@@ -6,27 +6,26 @@ services:
     container_name: pihole
 
     restart: unless-stopped
-    #cap_add:
-    #- NET_ADMIN
+    # cap_add:
+    # - NET_ADMIN
 
     # Network only needed if you want to use pihole while connected to the WireGuard VPN.
     networks:
       wireguard-pihole:
-        ipv4_address: 172.20.0.2
+        ipv4_address: 192.168.86.31 #IP on wiregaurd-pihole subnet
     ports:
       - 53:53/udp
       - 53:53/tcp
       - 67:67/udp
-      # Ports 80 and 443 changed to avoid conflict with NginxProxyManager
       - 8080:80/tcp
       - 4443:443/tcp
-      # Volumes set up as root for Proxmox default
+
     volumes:
       - /root/pihole/etc:/etc/pihole
       - /root/pihole/dns:/etc/dnsmasq.d
     environment:
       - TZ=America/Chicago
-      - WEBPASSWORD=changeme
+      - WEBPASSWORD=oompaLoompaPenguins
 
 # Network only needed if you want to use pihole while connected to the WireGuard VPN.
 networks:
@@ -36,4 +35,4 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 172.20.0.0/24
+        - subnet: 192.168.86.0/24 #IP on wiregaurd-pihole subnet
