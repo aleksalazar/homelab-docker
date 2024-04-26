@@ -1,0 +1,35 @@
+services:
+  palworld:
+    image: thijsvanloef/palworld-server-docker:latest
+    restart: unless-stopped
+    container_name: palworld-server
+    stop_grace_period: 5m # Set to however long you are willing to wait for the container to gracefully stop
+    ports:
+      - 8211:8211/udp
+      - 27015:27015/udp
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - PORT=8211
+      - PLAYERS=16
+      - SERVER_PASSWORD=${SERVER_PASSWORD}
+      - MULTITHREADING=true
+      - RCON_ENABLED=true
+      - RCON_PORT=25575
+      - TZ=CST
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - COMMUNITY=false # Enable this if you want your server to show up in the community servers tab, USE WITH SERVER_PASSWORD!
+      - SERVER_NAME=${SERVER_NAME}
+      - SERVER_DESCRIPTION=${SERVER_DESCRIPTION}
+      - AUTO_UPDATE_ENABLED=true
+      - AUTO_UPDATE_CRON_EXPRESSION=0 4 * * *
+      - AUTO_UPDATE_WARN_MINUTES=5
+      - AUTO_REBOOT_ENABLED=false
+      - AUTO_REBOOT_WARN_MINUTES=5
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
+      # SERVER SETTINGS
+      - DEATH_PENALTY=Item
+      - PAL_EGG_DEFAULT_HATCHING_TIME=24
+      - COOP_PLAYER_MAX_NUM=10 # players per guild
+    volumes:
+      - /root/palworld-server:/palworld/

@@ -1,0 +1,19 @@
+version: "3"
+services:
+  mailrise:
+    image: mailrise/mailrise
+    ports:
+      - 25:25
+    environment:
+      - MAILRISE_SMTP_FORWARDER_ENABLED=true
+      - MAILRISE_SMTP_FORWARDER_HOST=discord-webhook
+      - MAILRISE_SMTP_FORWARDER_PORT=80
+      - MAILRISE_SMTP_FORWARDER_PATH=/webhook-path
+    volumes:
+      - /docker/mailrise:/data
+
+  discord-webhook:
+    image: discord/discord-webhook
+    environment:
+      - DISCORD_WEBHOOK_PATH=/webhook-path
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}

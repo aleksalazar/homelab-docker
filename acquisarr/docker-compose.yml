@@ -1,0 +1,188 @@
+version: "3"
+
+services:
+  # VPN
+  gluetun:
+    image: qmcgaw/gluetun
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    ports:
+      - 6881:6881
+      - 6881:6881/udp
+      - 8085:8085 # qbittorrent
+      - 8989:8989 # Sonarr
+      - 7878:7878 # Radarr
+      - 9696:9696 # Prowlarr
+      - 8787:8787 # Readarr
+      - 8686:8686 # Lidarr
+    volumes:
+      - /docker/gluetun:/gluetun
+    environment:
+      - PUID=0
+      - PGID=0
+      - VPN_SERVICE_PROVIDER=${VPN_SERVICE_PROVIDER}
+      - OPENVPN_ROOT=yes
+      - OPENVPN_USER=${OPENVPN_USER}
+      - OPENVPN_PASSWORD=${OPENVPN_PASSWORD}
+      - TZ=${TZ}
+      - SERVER_REGIONS=${SERVER_REGIONS}
+      - UPDATER_PERIOD=24h
+      - FIREWALL_OUTBOUND_SUBNETS=${FIREWALL_OUTBOUND_SUBNETS}
+    restart: always
+  # Indexer proxy
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    hostname: flaresolverr
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_HTML=${LOG_HTML:-false}
+      - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
+      - TZ=${TZ}
+    ports:
+      - 8191:8191
+    restart: always
+  # Usenet client
+  sabnzbd:
+    image: lscr.io/linuxserver/sabnzbd:latest
+    container_name: sabnzbd
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ}
+    volumes:
+      - /docker/sabnzbd/config:/config
+      - /mnt/nas/media/downloads:/downloads
+      - /mnt/nas/media/incomplete-downloads:/incomplete-downloads #optional
+    ports:
+      - 8081:8081
+    restart: always
+  # Torrent client
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    network_mode: "service:gluetun"
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ}
+      - WEBUI_PORT=8085
+      - TORRENTING_PORT=6881
+    volumes:
+      - /docker/qbittorrent:/config
+      - /mnt/nas/media/downloads:/downloads
+    # ports:
+    #   - 8085:8085
+    #   - 6881:6881
+    #   - 6881:6881/udp
+    restart: always
+  # Command and control
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    environment:
+      - PUID=0
+      - PGID=0
+      - LOG_LEVEL=debug
+      - TZ=${TZ}
+    ports:
+      - 5055:5055
+    volumes:
+      - /docker/jellyseerr:/app/config
+    restart: always
+  # Indexer
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    network_mode: "service:gluetun"
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ}
+    volumes:
+      - /docker/prowlarr:/config
+    # ports:
+    #   - 9696:9696
+    restart: always
+  # Books
+  readarr:
+    image: lscr.io/linuxserver/readarr:develop
+    container_name: readarr
+    network_mode: "service:gluetun"
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ}
+    volumes:
+      - /docker/readarr:/config
+      - /mnt/nas/media/books:/books #optional
+      - /mnt/nas/media/downloads:/downloads #optional
+    # ports:
+    #   - 8787:8787
+    restart: always
+  # TV
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    network_mode: "service:gluetun"
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ}
+    volumes:
+      - /docker/sonarr:/config
+      - /mnt/nas/media/tv:/tv #optional
+      - /mnt/nas/media/downloads:/downloads #optional
+    # ports:
+    #   - 8989:8989
+    restart: always
+  # Movies
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    network_mode: "service:gluetun"
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ}
+    volumes:
+      - /docker/radarr:/config
+      - /mnt/nas/media/movies:/movies #optional
+      - /mnt/nas/media/downloads:/downloads #optional
+    # ports:
+    #   - 7878:7878
+    restart: always
+  # Music
+  lidarr:
+    image: lscr.io/linuxserver/lidarr:latest
+    container_name: lidarr
+    network_mode: "service:gluetun"
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ}
+    volumes:
+      - /docker/lidarr:/config
+      - /mnt/nas/media/music:/music #optional
+      - /mnt/nas/media/downloads:/downloads #optional
+    # ports:
+    #   - 8686:8686
+    restart: always
+  # Subtitles
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ}
+    volumes:
+      - /docker/bazarr/config:/config
+      - /mnt/nas/media/movies:/movies #optional
+      - /mnt/nas/media/tv:/tv #optional
+    ports:
+      - 6767:6767
+    restart: unless-stopped

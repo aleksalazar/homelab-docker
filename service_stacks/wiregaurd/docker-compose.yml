@@ -1,0 +1,40 @@
+version: "2.1"
+
+services:
+  wireguard:
+    image: linuxserver/wireguard:latest
+    container_name: wireguard
+    restart: unless-stopped
+    sysctls:
+      - net.ipv4.ip_forward=1
+      - net.ipv4.conf.all.src_valid_mark=1
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    networks:
+      wireguard-pihole:
+        ipv4_address: ${IPV4_ADDRESS}
+    ports:
+      - 51820:51820/udp
+    volumes:
+      - /docker/wiregaurd/config:/config
+      - /lib/modules:/lib/modules #optional
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ}
+      - SERVERURL=${SERVERURL} #optional
+      - SERVERPORT=51820
+      - PEERS=${PEERS}
+      - PEERDNS=${PEERDNS}
+      - ALLOWEDIPS=${ALLOWEDIPS}
+      - LOG_CONFS=true
+
+networks:
+  wireguard-pihole:
+    name: "wireguard-pihole"
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: ${SUBNET}

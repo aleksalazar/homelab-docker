@@ -1,0 +1,57 @@
+version: "3"
+
+services:
+  # Command and controll client
+  homarr:
+    container_name: homarr
+    image: ghcr.io/ajnart/homarr:latest
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # Optional, only if you want docker integration
+      - /docker/homarr/configs:/app/data/configs
+      - /docker/homarr/icons:/app/public/icons
+      - /docker/homarr/data:/data
+    ports:
+      - "7575:7575"
+  # Media Server
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ}
+      - NVIDIA_VISIBLE_DEVICES=all # Optional for hardware transcoding
+      - JELLYFIN_PublishedServerUrl=${PUBLISHED_SERVER_URL}
+    volumes:
+      - /docker/jellyfin/library:/config # Allocate 50GB+ storage
+      - /mnt/nas/media/tv:/data/tvshows
+      - /mnt/nas/media/movies:/data/movies
+      - /mnt/nas/media/music:/data/music
+    ports:
+      - 8096:8096 # Web GUI
+      - 8920:8920 #optional
+      - 7359:7359/udp #optional
+      - 1900:1900/udp #optional
+    restart: always
+    deploy: # Optional for hardware transcoding
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: ["gpu"]
+  # Books
+  kavita:
+    image: lscr.io/linuxserver/kavita:latest
+    container_name: kavita
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ}
+    volumes:
+      - /docker/kavita:/config
+      - /mnt/nas/media/books:/data
+    ports:
+      - 5000:5000 # Web GUI
+    restart: always

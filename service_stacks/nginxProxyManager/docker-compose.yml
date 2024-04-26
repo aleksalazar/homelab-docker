@@ -1,0 +1,16 @@
+version: "3"
+
+services:
+  npm:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: npm
+    restart: always
+
+    ports:
+      - 80:80
+      - 81:81
+      - 443:443
+    # Change volumes to your desired path
+    volumes:
+      - /root/npm/data:/data
+      - /root/npm/letsencrypt:/etc/letsencrypt

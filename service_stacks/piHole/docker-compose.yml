@@ -1,0 +1,38 @@
+version: "3"
+
+services:
+  pihole:
+    image: pihole/pihole:latest
+    container_name: pihole
+
+    restart: unless-stopped
+    # cap_add:
+    # - NET_ADMIN
+
+    # Network only needed if you want to use pihole while connected to the WireGuard VPN.
+    networks:
+      wireguard-pihole:
+        ipv4_address: ${WIREGAURD_PIHOLE_IPV4} #IP on wiregaurd-pihole subnet
+    ports:
+      - 53:53/udp
+      - 53:53/tcp
+      - 67:67/udp
+      - 8080:80/tcp
+      - 4443:443/tcp
+
+    volumes:
+      - /root/pihole/etc:/etc/pihole
+      - /root/pihole/dns:/etc/dnsmasq.d
+    environment:
+      - TZ=America/Chicago
+      - WEBPASSWORD=${WEB_PASSWORD}
+
+# Network only needed if you want to use pihole while connected to the WireGuard VPN.
+networks:
+  wireguard-pihole:
+    name: "wireguard-pihole"
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: ${WIREGAURD_SUBNET} #IP on wiregaurd-pihole subnet
