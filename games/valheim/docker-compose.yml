@@ -1,34 +1,28 @@
-version: "3"
+version: "3.8"
+
 services:
-  valheim:
-    image: mbround18/valheim:latest
-    stop_signal: SIGINT
+  valheim-server:
+    image: ghcr.io/lloesche/valheim-server
+    container_name: valheim-server
+    cap_add:
+      - sys_nice
+    stop_grace_period: 2m
     ports:
-      - "${PORT}:${PORT}/udp"
-      - "2457:2457/udp"
-      - "2458:2458/udp"
-    environment:
-      PORT: ${PORT}
-      NAME: "${NAME}"
-      WORLD: "${WORLD}"
-      PASSWORD: "${PASSWORD}"
-      TZ: "${TZ}"
-      ENABLE_CROSSPLAY: 1
-      PUBLIC: 0
-      AUTO_UPDATE: 1
-      AUTO_UPDATE_SCHEDULE: "0 5 * * *"
-      AUTO_BACKUP: 1
-      AUTO_BACKUP_SCHEDULE: "0 3 * * *"
-      AUTO_BACKUP_REMOVE_OLD: 1
-      AUTO_BACKUP_DAYS_TO_LIVE: 5
-      AUTO_BACKUP_ON_UPDATE: 1
-      AUTO_BACKUP_ON_SHUTDOWN: 1
-      AUTO_UPDATE_PAUSE_WITH_PLAYERS: 1
-      WEBHOOK_URL: "${WEBHOOK_URL}"
-      WEBHOOK_INCLUDE_PUBLIC_IP: 0
-      UPDATE_ON_STARTUP: 0
-      STEAMCMD_ARGS: ${STEAMCMD_ARGS} # Used to play beta versions as well
+      - 2456-2457:2456-2457/udp
     volumes:
-      - /docker/valheim/saves:/home/steam/.config/unity3d/IronGate/Valheim
-      - /docker/valheim/server:/home/steam/valheim
-      - /docker/valheim/backups:/home/steam/backups
+      - /docker/valheim-server/config:/config
+      - /docker/valheim-server/data:/opt/valheim
+    environment:
+      - SERVER_NAME=${NAME}
+      - WORLD_NAME=${WORLD}
+      - SERVER_PASS=${PASSWORD}
+      - SERVER_PUBLIC=false
+      - PUBLIC_TEST=true
+      - BACKUPS_CRON="0 */12 * * *"
+      - STATUS_HTTP=true
+      - SERVER_ARGS="-crossplay"
+      - DISCORD_WEBHOOK=${WEBHOOK_URL}
+      - DISCORD_MESSAGE_START="Valheim server $$SERVER_NAME is starting."
+      - DISCORD_MESSAGE_RESTART="Valheim server $$SERVER_NAME is restarting."
+      - 'PRE_BOOTSTRAP_HOOK=curl -sfSL -X POST -H "Content-Type: application/json" -d "{\"username\":\"Valheim\",\"content\":\"$$(eval echo $$DISCORD_MESSAGE_START)\"}" "$$DISCORD_WEBHOOK"'
+      - 'PRE_RESTART_HOOK=curl -sfSL -X POST -H "Content-Type: application/json" -d "{\"username\":\"Valheim\",\"content\":\"$(eval echo $$DISCORD_MESSAGE_RESTART)\"}" "$$DISCORD_WEBHOOK"'
