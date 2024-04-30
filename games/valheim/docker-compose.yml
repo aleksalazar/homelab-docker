@@ -20,7 +20,7 @@ services:
       - PUBLIC_TEST=true
       - BACKUPS_CRON="0 */12 * * *"
       - STATUS_HTTP=true
-      - SERVER_ARGS="-crossplay"
+      - SERVER_ARGS=-crossplay
       - DISCORD_WEBHOOK=${WEBHOOK_URL}
       - DISCORD_MESSAGE_START="Valheim server $$SERVER_NAME is starting."
       - DISCORD_MESSAGE_RESTART="Valheim server $$SERVER_NAME is restarting."
