@@ -28,3 +28,4 @@ services:
       - 'PRE_BOOTSTRAP_HOOK=curl -sfSL -X POST -H "Content-Type: application/json" -d "{\"username\":\"Valheim\",\"content\":\"$$(eval echo $$DISCORD_MESSAGE_START)\"}" "$$DISCORD_WEBHOOK"'
       - 'PRE_RESTART_HOOK=curl -sfSL -X POST -H "Content-Type: application/json" -d "{\"username\":\"Valheim\",\"content\":\"$(eval echo $$DISCORD_MESSAGE_RESTART)\"}" "$$DISCORD_WEBHOOK"'
       - 'PRE_SHUTDOWN_HOOK=curl -sfSL -X POST -H "Content-Type: application/json" -d "{\"username\":\"Valheim\",\"content\":\"$$(eval echo $$DISCORD_MESSAGE_SHUTDOWN)\"}" "$$DISCORD_WEBHOOK"'
+    restart: always
