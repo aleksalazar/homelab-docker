@@ -20,11 +20,12 @@ services:
       - PUBLIC_TEST=true
       - BACKUPS_CRON="0 */12 * * *"
       - STATUS_HTTP=true
-      - SERVER_ARGS=-crossplay
+      - SERVER_ARGS=${SERVER_ARGS}
       - DISCORD_WEBHOOK=${WEBHOOK_URL}
       - DISCORD_MESSAGE_START="Valheim server $$SERVER_NAME is starting."
       - DISCORD_MESSAGE_RESTART="Valheim server $$SERVER_NAME is restarting."
       - DISCORD_MESSAGE_SHUTDOWN="Valheim server $$SERVER_NAME is shutting down."
+      - DISCORD_MESSAGE_STOP="Valheim server $$SERVER_NAME is shutting down."
       - 'PRE_BOOTSTRAP_HOOK=curl -sfSL -X POST -H "Content-Type: application/json" -d "{\"username\":\"Valheim\",\"content\":\"$$(eval echo $$DISCORD_MESSAGE_START)\"}" "$$DISCORD_WEBHOOK"'
       - 'PRE_RESTART_HOOK=curl -sfSL -X POST -H "Content-Type: application/json" -d "{\"username\":\"Valheim\",\"content\":\"$(eval echo $$DISCORD_MESSAGE_RESTART)\"}" "$$DISCORD_WEBHOOK"'
       - 'PRE_SHUTDOWN_HOOK=curl -sfSL -X POST -H "Content-Type: application/json" -d "{\"username\":\"Valheim\",\"content\":\"$$(eval echo $$DISCORD_MESSAGE_SHUTDOWN)\"}" "$$DISCORD_WEBHOOK"'
