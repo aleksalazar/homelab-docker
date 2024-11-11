@@ -20,6 +20,7 @@ services:
       - PUBLIC_TEST=true
       - BACKUPS_CRON="0 */12 * * *"
       - STATUS_HTTP=true
+      - ADMINLIST_IDS=${ADMIN_IDS}
       - SERVER_ARGS=${SERVER_ARGS}
       - DISCORD_WEBHOOK=${WEBHOOK_URL}
       - DISCORD_MESSAGE_START="Valheim server $$SERVER_NAME is starting."
